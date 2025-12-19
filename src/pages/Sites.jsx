@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Sparkline from '../components/ui/Sparkline';
 import { MoreVertical, ExternalLink, ShieldCheck, LogIn, Loader2 } from 'lucide-react';
-import { useGoogleLogin } from '@react-oauth/google';
 import { fetchSites, fetchSearchAnalytics } from '../services/gscApi';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sites() {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const { user, login, logout } = useAuth();
     const [sites, setSites] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -23,12 +23,7 @@ export default function Sites() {
         };
     };
 
-    // Authenticate with Google
-    const login = useGoogleLogin({
-        onSuccess: (codeResponse) => setUser(codeResponse),
-        onError: (error) => console.log('Login Failed:', error),
-        scope: 'https://www.googleapis.com/auth/webmasters.readonly'
-    });
+    // Helper: Get date range (Last 28 days)
 
     // Fetch Sites & Stats
     // Helper: Clean domain for display and favicons
@@ -150,10 +145,20 @@ export default function Sites() {
                         <LogIn size={18} className="mr-2" /> Connect Google
                     </button>
                 ) : (
-                    <div className="flex items-center space-x-3">
-                        <span className="text-sm text-gray-400">Connected</span>
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                    </div>
+                    <button onClick={() => {
+                        if (confirm('Disconnect from Google Search Console?')) {
+                            logout();
+
+                        }
+                    }} className="flex items-center space-x-3 px-4 py-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer group">
+                        <div className="text-right hidden sm:block">
+                            <div className="text-sm text-white font-medium group-hover:text-red-400 transition-colors">Connected</div>
+                            <div className="text-xs text-gray-500">Click to disconnect</div>
+                        </div>
+                        <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-emerald-900/20">
+                            {user.name ? user.name[0] : 'G'}
+                        </div>
+                    </button>
                 )}
             </div>
 
@@ -198,7 +203,11 @@ export default function Sites() {
                                             <div className="flex flex-col justify-center h-full">
                                                 <div className="flex items-center space-x-4 mb-1.5">
                                                     <img src={site.favicon} alt="" className="w-6 h-6 rounded-md bg-white/10 p-0.5" />
-                                                    <a href={site.domain} target="_blank" rel="noreferrer" className="font-semibold text-base text-white hover:text-indigo-400 hover:underline decoration-indigo-400/50 underline-offset-4 transition-all max-w-[200px] truncate">
+                                                    <a href={site.rawId.startsWith('http') ? site.rawId : `https://${site.domain}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="font-semibold text-base text-white hover:text-indigo-400 hover:underline decoration-indigo-400/50 underline-offset-4 transition-all max-w-[200px] truncate">
                                                         {site.domain}
                                                     </a>
                                                     {site.permissionLevel === 'siteOwner' && <ShieldCheck size={16} className="text-emerald-500" />}
@@ -244,9 +253,9 @@ export default function Sites() {
 
                                         {/* Actions */}
                                         <td className="p-6 text-right pr-6">
-                                            <button className="p-2 text-gray-500 hover:text-white rounded-lg hover:bg-white/5 transition-colors">
-                                                <MoreVertical size={20} />
-                                            </button>
+                                            <div className="flex items-center justify-end group-hover:translate-x-1 transition-transform duration-300">
+                                                <ExternalLink size={20} className="text-gray-600 group-hover:text-indigo-400" />
+                                            </div>
                                         </td>
 
                                     </tr>
