@@ -3,8 +3,10 @@ import Sparkline from '../components/ui/Sparkline';
 import { MoreVertical, ExternalLink, ShieldCheck, LogIn, Loader2 } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { fetchSites, fetchSearchAnalytics } from '../services/gscApi';
+import { useNavigate } from 'react-router-dom';
 
 export default function Sites() {
+    const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [sites, setSites] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -186,7 +188,10 @@ export default function Sites() {
                             </thead>
                             <tbody className="divide-y divide-[#27282b] text-sm">
                                 {sites.map((site) => (
-                                    <tr key={site.domain} className="group hover:bg-[#1f2023] transition-colors">
+                                    <tr key={site.domain}
+                                        onClick={() => navigate(`/sites/${encodeURIComponent(site.rawId)}`)}
+                                        className="group hover:bg-[#1f2023] transition-colors cursor-pointer"
+                                    >
 
                                         {/* Domain Column */}
                                         <td className="p-6 pl-8">
